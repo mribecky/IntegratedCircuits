@@ -63,6 +63,8 @@ public class IntegratedCircuitsMod {
 		circuitComponent = new BlockCircuitComponent(2004);
 		GameRegistry.registerBlock(circuitComponent, "circuitComponent");
 		LanguageRegistry.addName(circuitComponent, "Circuit Component");
+		
+		GameRegistry.registerTileEntity(TileCircuitComponentLogic.class, "circuitComponentLogic");
 
 		redstoneReader = new ItemRedstoneReader(5000);
 		GameRegistry.registerItem(redstoneReader, "RedstoneReader");

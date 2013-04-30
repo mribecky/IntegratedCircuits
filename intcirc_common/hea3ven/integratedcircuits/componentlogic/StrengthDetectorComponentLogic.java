@@ -19,18 +19,18 @@
 
 package hea3ven.integratedcircuits.componentlogic;
 
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 public class StrengthDetectorComponentLogic extends ComponentLogic {
 
 	boolean powered;
-	int orientation = 4;
-	int desiredStrength = 10;
+	int targetStrength = 10;
 
 	@Override
 	public int getUpdateTime(World world, int x, int y, int z,
 			int neighborBlockID) {
-		if (powered != (getInputStrength(world, x, y, z, orientation) == desiredStrength))
+		if (powered != (getInputStrength(world, x, y, z, getInputSide()) == targetStrength))
 			return 2;
 		else
 			return 0;
@@ -38,15 +38,26 @@ public class StrengthDetectorComponentLogic extends ComponentLogic {
 
 	@Override
 	public void onUpdate(World world, int x, int y, int z) {
-		powered = getInputStrength(world, x, y, z, orientation) == desiredStrength;
+		powered = getInputStrength(world, x, y, z, getInputSide()) == targetStrength;
 	}
 
 	@Override
 	public int getSignalOutput(int side) {
-		if (powered && side == 3)
+		if (powered && side == getOutputSide())
 			return 15;
 		else
 			return 0;
+	}
+
+	@Override
+	public void writeToNBT(NBTTagCompound nbtTagCompound) {
+		nbtTagCompound.setInteger("targetStrength", targetStrength);
+	}
+
+	@Override
+	public void readFromNBT(NBTTagCompound nbtTagCompound) {
+		targetStrength = nbtTagCompound.getInteger("targetStrength");
+		
 	}
 
 }

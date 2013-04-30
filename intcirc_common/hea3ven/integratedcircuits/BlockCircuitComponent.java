@@ -25,7 +25,10 @@ import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
@@ -142,4 +145,17 @@ public class BlockCircuitComponent extends Block implements ITileEntityProvider 
 		world.notifyBlocksOfNeighborChange(x, y - 1, z, this.blockID);
 		world.notifyBlocksOfNeighborChange(x, y + 1, z, this.blockID);
 	}
+
+	/**
+	 * Called when the block is placed in the world.
+	 */
+	public void onBlockPlacedBy(World world, int x, int y, int z,
+			EntityLiving entityLiving, ItemStack itemStack) {
+		int l = ((MathHelper
+				.floor_double((double) (entityLiving.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3) + 2) % 4;
+		this.getTileEntity(world, x, y, z).setDirection(l);
+
+		world.scheduleBlockUpdate(x, y, z, this.blockID, 1);
+	}
+
 }

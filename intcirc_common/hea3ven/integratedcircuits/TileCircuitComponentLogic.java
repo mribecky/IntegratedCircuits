@@ -19,15 +19,17 @@
 
 package hea3ven.integratedcircuits;
 
+import java.util.Map.Entry;
+
 import hea3ven.integratedcircuits.componentlogic.ComponentLogic;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 public class TileCircuitComponentLogic extends TileEntity {
 
-	int orientation = 0;
-	protected boolean powered = false;
 	private ComponentLogic logic;
+	private int direction;
 
 	public TileCircuitComponentLogic() {
 		logic = null;
@@ -54,5 +56,45 @@ public class TileCircuitComponentLogic extends TileEntity {
 
 	public void SetLogic(ComponentLogic componentLogic) {
 		this.logic = componentLogic;
+	}
+	
+	@Override
+	public void writeToNBT(NBTTagCompound nbtTagCompound) {
+		super.writeToNBT(nbtTagCompound);
+		
+		nbtTagCompound.setInteger("componentID", getComponentID());
+		nbtTagCompound.setInteger("direction", direction);
+		logic.writeToNBT(nbtTagCompound);
+	}	
+	
+	private int getComponentID() {
+		for (Entry<Integer, Class<? extends ComponentLogic>> entry : IntegratedCircuitsMod.componentLogicsClass.entrySet()) {
+			if(entry.getValue().isInstance(logic))
+				return entry.getKey();
+		}
+		return 0;
+	}
+
+	@Override
+	public void readFromNBT(NBTTagCompound nbtTagCompound) {
+		super.readFromNBT(nbtTagCompound);
+		
+		try {
+			logic = IntegratedCircuitsMod.componentLogicsClass.get(nbtTagCompound.getInteger("componentID")).newInstance();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		setDirection(nbtTagCompound.getInteger("direction"));
+		
+		logic.readFromNBT(nbtTagCompound);
+	}
+
+	public void setDirection(int direction) {
+		this.direction = direction;
+		logic.setDirection(direction);
 	}
 }

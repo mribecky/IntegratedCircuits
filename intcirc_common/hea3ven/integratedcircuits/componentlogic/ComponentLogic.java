@@ -20,10 +20,13 @@
 package hea3ven.integratedcircuits.componentlogic;
 
 import net.minecraft.block.Block;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Direction;
 import net.minecraft.world.World;
 
 public abstract class ComponentLogic {
+
+	private int direction = 0;
 
 	abstract public int getUpdateTime(World world, int x, int y, int z,
 			int neighborBlockID);
@@ -31,6 +34,10 @@ public abstract class ComponentLogic {
 	abstract public void onUpdate(World world, int x, int y, int z);
 
 	abstract public int getSignalOutput(int side);
+
+	abstract public void writeToNBT(NBTTagCompound nbtTagCompound);
+
+	abstract public void readFromNBT(NBTTagCompound nbtTagCompound);
 
 	/**
 	 * Returns the signal strength at one input of the block. Args: world, X, Y,
@@ -46,6 +53,21 @@ public abstract class ComponentLogic {
 						power,
 						world.getBlockId(inX, y, inZ) == Block.redstoneWire.blockID ? world
 								.getBlockMetadata(inX, y, inZ) : 0);
+	}
+	
+	public void setDirection(int direction)
+	{
+		this.direction  = direction; 
+	}
+	
+	protected int getInputSide()
+	{
+		return direction;
+	}
+	
+	protected int getOutputSide()
+	{
+		return Direction.directionToFacing[direction];
 	}
 
 }
