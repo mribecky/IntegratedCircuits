@@ -19,6 +19,8 @@
 
 package hea3ven.integratedcircuits;
 
+import java.lang.reflect.InvocationTargetException;
+
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
@@ -88,7 +90,7 @@ public class ItemCircuitComponent extends Item {
 				TileCircuitComponentLogic tile = (TileCircuitComponentLogic) world
 						.getBlockTileEntity(x, y, z);
 				try {
-					tile.SetLogic(IntegratedCircuitsMod.componentLogicsClass.get(this.componentID).newInstance());
+					tile.setLogic(IntegratedCircuitsMod.componentLogicsClass.get(this.componentID).getDeclaredConstructor(TileCircuitComponentLogic.class).newInstance(this));
 				} catch (InstantiationException e) {
 					e.printStackTrace();
 					world.setBlockToAir(x, y, z);
@@ -97,10 +99,27 @@ public class ItemCircuitComponent extends Item {
 					e.printStackTrace();
 					world.setBlockToAir(x, y, z);
 					return false;
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+					world.setBlockToAir(x, y, z);
+					return false;
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+					world.setBlockToAir(x, y, z);
+					return false;
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+					world.setBlockToAir(x, y, z);
+					return false;
+				} catch (SecurityException e) {
+					e.printStackTrace();
+					world.setBlockToAir(x, y, z);
+					return false;
 				}
 
 				Block.blocksList[blockID].onBlockPlacedBy(world, x, y, z,
 						entityPlayer, itemStack);
+				
 				world.playSoundEffect(x + 0.5F, y + 0.5F, z + 0.5F,
 						block.stepSound.getPlaceSound(),
 						(block.stepSound.getVolume() + 1.0F) / 2.0F,

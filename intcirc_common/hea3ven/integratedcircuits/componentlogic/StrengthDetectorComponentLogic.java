@@ -19,13 +19,30 @@
 
 package hea3ven.integratedcircuits.componentlogic;
 
+import hea3ven.integratedcircuits.TileCircuitComponentLogic;
+import hea3ven.integratedcircuits.client.StrengthDerectorModel;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 public class StrengthDetectorComponentLogic extends ComponentLogic {
 
+	public StrengthDetectorComponentLogic(TileCircuitComponentLogic tileEntity) {
+		super(tileEntity);
+	}
+
 	boolean powered;
 	int targetStrength = 10;
+
+	private static final StrengthDerectorModel[] models = new StrengthDerectorModel[] {
+			new StrengthDerectorModel(1), new StrengthDerectorModel(2),
+			new StrengthDerectorModel(3), new StrengthDerectorModel(4),
+			new StrengthDerectorModel(5), new StrengthDerectorModel(6),
+			new StrengthDerectorModel(7), new StrengthDerectorModel(8),
+			new StrengthDerectorModel(9), new StrengthDerectorModel(10),
+			new StrengthDerectorModel(11), new StrengthDerectorModel(12),
+			new StrengthDerectorModel(13), new StrengthDerectorModel(14),
+			new StrengthDerectorModel(15) };
 
 	@Override
 	public int getUpdateTime(World world, int x, int y, int z,
@@ -39,6 +56,7 @@ public class StrengthDetectorComponentLogic extends ComponentLogic {
 	@Override
 	public void onUpdate(World world, int x, int y, int z) {
 		powered = getInputStrength(world, x, y, z, getInputSide()) == targetStrength;
+		sendUpdatePacket();
 	}
 
 	@Override
@@ -57,7 +75,46 @@ public class StrengthDetectorComponentLogic extends ComponentLogic {
 	@Override
 	public void readFromNBT(NBTTagCompound nbtTagCompound) {
 		targetStrength = nbtTagCompound.getInteger("targetStrength");
-		
+
 	}
 
+	@Override
+	public boolean isLit() {
+		return powered;
+	}
+
+	@Override
+	public void addToDescriptionPacket(NBTTagCompound nbttagcompound) {
+		nbttagcompound.setBoolean("powered", powered);
+	}
+
+	@Override
+	public void readFromDescriptionPacket(NBTTagCompound nbttagcompound) {
+		powered = nbttagcompound.getBoolean("powered");
+	}
+
+	@Override
+	public boolean onBlockActivated(World world, int x, int y, int z,
+			EntityPlayer entityPlayer, int side, float hitVecX, float hitVecY,
+			float hitVecZ) {
+		if (targetStrength >= 15)
+			targetStrength = 1;
+		else
+			targetStrength++;
+		sendUpdatePacket();
+		return true;
+	}
+
+	@Override
+	public String getTextureName() {
+		if (this.getSignalOutput(this.getOutputSide()) > 0)
+			return "/mods/integratedcircuits/textures/blocks/strength_detector_lit.png";
+		else
+			return "/mods/integratedcircuits/textures/blocks/strength_detector.png";
+	}
+
+	@Override
+	public StrengthDerectorModel getModel() {
+		return models[targetStrength - 1];
+	}
 }

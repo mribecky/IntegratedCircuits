@@ -19,20 +19,30 @@
 
 package hea3ven.integratedcircuits;
 
+import java.util.ArrayList;
 import java.util.Random;
+
+import cpw.mods.fml.common.network.PacketDispatcher;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Icon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockCircuitComponent extends Block implements ITileEntityProvider {
+
+	private boolean sendInitialData;
 
 	public BlockCircuitComponent(int blockID) {
 		super(blockID, Material.circuits);
@@ -78,6 +88,24 @@ public class BlockCircuitComponent extends Block implements ITileEntityProvider 
 	 */
 	public boolean canProvidePower() {
 		return true;
+	}
+
+	/**
+	 * Checks to see if its valid to put this block at the specified
+	 * coordinates. Args: world, x, y, z
+	 */
+	public boolean canPlaceBlockAt(World world, int x, int y, int z) {
+		return !world.doesBlockHaveSolidTopSurface(x, y - 1, z) ? false : super
+				.canPlaceBlockAt(world, x, y, z);
+	}
+
+	/**
+	 * Can this block stay at this position. Similar to canPlaceBlockAt except
+	 * gets checked often with plants.
+	 */
+	public boolean canBlockStay(World world, int x, int y, int z) {
+		return !world.doesBlockHaveSolidTopSurface(x, y - 1, z) ? false : super
+				.canBlockStay(world, x, y, z);
 	}
 
 	/**
@@ -136,7 +164,17 @@ public class BlockCircuitComponent extends Block implements ITileEntityProvider 
 	 * Ticks the block if it's been scheduled
 	 */
 	public void updateTick(World world, int x, int y, int z, Random random) {
-		this.getTileEntity(world, x, y, z).onUpdate(world, x, y, z);
+
+		TileCircuitComponentLogic tile = this.getTileEntity(world, x, y, z);
+		if (this.sendInitialData) {
+			// TODO: this should be done by the tile entity
+			this.sendInitialData = false;
+			Packet packet = tile.getDescriptionPacket();
+			if (packet != null)
+				PacketDispatcher.sendPacketToAllPlayers(packet);
+		}
+
+		tile.onUpdate(world, x, y, z);
 		world.notifyBlocksOfNeighborChange(x, y, z, this.blockID);
 		world.notifyBlocksOfNeighborChange(x + 1, y, z, this.blockID);
 		world.notifyBlocksOfNeighborChange(x - 1, y, z, this.blockID);
@@ -144,6 +182,7 @@ public class BlockCircuitComponent extends Block implements ITileEntityProvider 
 		world.notifyBlocksOfNeighborChange(x, y, z - 1, this.blockID);
 		world.notifyBlocksOfNeighborChange(x, y - 1, z, this.blockID);
 		world.notifyBlocksOfNeighborChange(x, y + 1, z, this.blockID);
+
 	}
 
 	/**
@@ -154,8 +193,78 @@ public class BlockCircuitComponent extends Block implements ITileEntityProvider 
 		int l = ((MathHelper
 				.floor_double((double) (entityLiving.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3) + 2) % 4;
 		this.getTileEntity(world, x, y, z).setDirection(l);
+		world.setBlockMetadataWithNotify(x, y, z, 0, 3);
+		this.sendInitialData = true;
 
 		world.scheduleBlockUpdate(x, y, z, this.blockID, 1);
+	}
+
+	@Override
+	public ArrayList<ItemStack> getBlockDropped(World world, int x, int y,
+			int z, int metadata, int fortune) {
+		TileCircuitComponentLogic te = (TileCircuitComponentLogic) world
+				.getBlockTileEntity(x, y, z);
+		IntegratedCircuitsMod.getComponentId(te.getLogic().getClass());
+
+		ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+		ret.add(new ItemStack(
+				IntegratedCircuitsMod.componentItemStrengthDetector, 1,
+				damageDropped(metadata)));
+
+		return ret;
+	}
+
+	@Override
+	public boolean onBlockActivated(World world, int x, int y, int z,
+			EntityPlayer entityPlayer, int side, float hitVecX, float hitVecY,
+			float hitVecZ) {
+			TileCircuitComponentLogic te = (TileCircuitComponentLogic)world.getBlockTileEntity(x, y, z);
+		return te.onBlockActivated(world, x, y, z, entityPlayer, side, hitVecX, hitVecY, hitVecZ);
+	}
+
+	@Override
+	public int getRenderType() {
+		return IntegratedCircuitsMod.renderCircuitComponentID;
+	}
+
+	@Override
+	@SideOnly(Side.CLIENT)
+	public Icon getIcon(int metadata, int side) {
+		if (metadata == 0) {
+			return Block.torchRedstoneIdle.getBlockTextureFromSide(side);
+		} else {
+			if (side == 1)
+				return null;
+			else
+				return Block.stoneDoubleSlab.getBlockTextureFromSide(1);
+		}
+	}
+
+	/**
+	 * Returns true if the given side of this block type should be rendered, if
+	 * the adjacent block is at the given coordinates. Args: blockAccess, x, y,
+	 * z, side
+	 */
+	public boolean shouldSideBeRendered(IBlockAccess world, int x, int y,
+			int z, int side) {
+		return false;
+	}
+
+	/**
+	 * If this block doesn't render as an ordinary block it will return False
+	 * (examples: signs, buttons, stairs, etc)
+	 */
+	public boolean renderAsNormalBlock() {
+		return false;
+	}
+
+	/**
+	 * Is this block (a) opaque and (b) a full 1m cube? This determines whether
+	 * or not to render the shared face of two adjacent blocks and also whether
+	 * the player can attach torches, redstone wire, etc to this block.
+	 */
+	public boolean isOpaqueCube() {
+		return false;
 	}
 
 }

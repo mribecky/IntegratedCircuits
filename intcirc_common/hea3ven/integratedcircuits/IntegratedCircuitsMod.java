@@ -19,11 +19,15 @@
 
 package hea3ven.integratedcircuits;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import hea3ven.integratedcircuits.client.RenderCircuitComponent;
 import hea3ven.integratedcircuits.componentlogic.ComponentLogic;
 import hea3ven.integratedcircuits.componentlogic.StrengthDetectorComponentLogic;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.Init;
 import cpw.mods.fml.common.Mod.Instance;
@@ -50,8 +54,10 @@ public class IntegratedCircuitsMod {
 
 	public static ItemRedstoneReader redstoneReader;
 	public static ItemCircuitComponent componentItemStrengthDetector;
-	
-	public static Map<Integer, Class<? extends ComponentLogic>> componentLogicsClass = new HashMap<>(); 
+
+	public static Map<Integer, Class<? extends ComponentLogic>> componentLogicsClass = new HashMap<>();
+
+	public static int renderCircuitComponentID;
 
 	@PreInit
 	public void preInit(FMLPreInitializationEvent event) {
@@ -61,29 +67,47 @@ public class IntegratedCircuitsMod {
 	public void load(FMLInitializationEvent event) {
 
 		circuitComponent = new BlockCircuitComponent(2004);
-		GameRegistry.registerBlock(circuitComponent, "circuitComponent");
-		LanguageRegistry.addName(circuitComponent, "Circuit Component");
-		
-		GameRegistry.registerTileEntity(TileCircuitComponentLogic.class, "circuitComponentLogic");
+//		GameRegistry.registerBlock(circuitComponent, "circuitComponent");
+//		LanguageRegistry.addName(circuitComponent, "Circuit Component");
+
+		GameRegistry.registerTileEntity(TileCircuitComponentLogic.class,
+				"circuitComponentLogic");
+		ClientRegistry.bindTileEntitySpecialRenderer(
+				TileCircuitComponentLogic.class, new RenderCircuitComponent());
 
 		redstoneReader = new ItemRedstoneReader(5000);
 		GameRegistry.registerItem(redstoneReader, "RedstoneReader");
 		LanguageRegistry.addName(redstoneReader, "Redstone Reader");
-		
+
 		addComponentLogic(5001, 1, StrengthDetectorComponentLogic.class);
+
+		// renderCircuitComponentID =
+		// RenderingRegistry.getNextAvailableRenderId();
+		// RenderingRegistry.registerBlockHandler(new
+		// RenderingCircuitComponent());
 	}
 
 	private void addComponentLogic(int itemID, int componentID,
 			Class<StrengthDetectorComponentLogic> klass) {
 		componentLogicsClass.put(componentID, klass);
-		componentItemStrengthDetector = new ItemCircuitComponent(itemID, componentID);
+		componentItemStrengthDetector = new ItemCircuitComponent(itemID,
+				componentID);
 		GameRegistry.registerItem(componentItemStrengthDetector,
 				"circuitComponentStrengthDetector");
 		LanguageRegistry.addName(redstoneReader, "Strength Detector");
-		
+
 	}
 
 	@PostInit
 	public void postInit(FMLPostInitializationEvent event) {
+	}
+
+	public static int getComponentId(
+			Class<? extends ComponentLogic> klass) {
+		for (Entry<Integer, Class<? extends ComponentLogic>> entry : componentLogicsClass.entrySet()) {
+			if(entry.getValue() == klass)
+				return entry.getKey();
+		}
+		return 0;
 	}
 }

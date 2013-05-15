@@ -19,12 +19,19 @@
 
 package hea3ven.integratedcircuits;
 
+import hea3ven.integratedcircuits.componentlogic.ComponentLogic;
+
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map.Entry;
 
-import hea3ven.integratedcircuits.componentlogic.ComponentLogic;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.INetworkManager;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.Packet132TileEntityData;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
+import cpw.mods.fml.common.network.PacketDispatcher;
 
 public class TileCircuitComponentLogic extends TileEntity {
 
@@ -54,22 +61,27 @@ public class TileCircuitComponentLogic extends TileEntity {
 			logic.onUpdate(world, x, y, z);
 	}
 
-	public void SetLogic(ComponentLogic componentLogic) {
+	public void setLogic(ComponentLogic componentLogic) {
 		this.logic = componentLogic;
 	}
-	
+
+	public ComponentLogic getLogic() {
+		return this.logic;
+	}
+
 	@Override
 	public void writeToNBT(NBTTagCompound nbtTagCompound) {
 		super.writeToNBT(nbtTagCompound);
-		
+
 		nbtTagCompound.setInteger("componentID", getComponentID());
 		nbtTagCompound.setInteger("direction", direction);
 		logic.writeToNBT(nbtTagCompound);
-	}	
-	
+	}
+
 	private int getComponentID() {
-		for (Entry<Integer, Class<? extends ComponentLogic>> entry : IntegratedCircuitsMod.componentLogicsClass.entrySet()) {
-			if(entry.getValue().isInstance(logic))
+		for (Entry<Integer, Class<? extends ComponentLogic>> entry : IntegratedCircuitsMod.componentLogicsClass
+				.entrySet()) {
+			if (entry.getValue().isInstance(logic))
 				return entry.getKey();
 		}
 		return 0;
@@ -78,23 +90,78 @@ public class TileCircuitComponentLogic extends TileEntity {
 	@Override
 	public void readFromNBT(NBTTagCompound nbtTagCompound) {
 		super.readFromNBT(nbtTagCompound);
-		
+
 		try {
-			logic = IntegratedCircuitsMod.componentLogicsClass.get(nbtTagCompound.getInteger("componentID")).newInstance();
+			logic = IntegratedCircuitsMod.componentLogicsClass.get(
+					nbtTagCompound.getInteger("componentID")).getDeclaredConstructor(TileCircuitComponentLogic.class).newInstance(this);
+
 		} catch (InstantiationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		setDirection(nbtTagCompound.getInteger("direction"));
-		
+
 		logic.readFromNBT(nbtTagCompound);
 	}
 
 	public void setDirection(int direction) {
 		this.direction = direction;
-		logic.setDirection(direction);
+		this.logic.setDirection(direction);
 	}
+
+	public int getDirection() {
+		return this.direction;
+	}
+
+	@Override
+	public Packet getDescriptionPacket() {
+		NBTTagCompound nbttagcompound = new NBTTagCompound();
+		this.writeToNBT(nbttagcompound);
+		this.addToDescriptionPacket(nbttagcompound);
+		return new Packet132TileEntityData(this.xCoord, this.yCoord,
+				this.zCoord, 0, nbttagcompound);
+	}
+
+	@Override
+	public void onDataPacket(INetworkManager net, Packet132TileEntityData pkt) {
+		this.readFromNBT(pkt.customParam1);
+		this.readFromDescriptionPacket(pkt.customParam1);
+	}
+
+	private void addToDescriptionPacket(NBTTagCompound nbttagcompound) {
+		this.logic.addToDescriptionPacket(nbttagcompound);
+	}
+	
+	private void readFromDescriptionPacket(NBTTagCompound nbttagcompound) {
+		this.logic.readFromDescriptionPacket(nbttagcompound);
+	}
+
+	public boolean onBlockActivated(World world, int x, int y, int z,
+			EntityPlayer entityPlayer, int side, float hitVecX, float hitVecY,
+			float hitVecZ) {
+		return this.logic.onBlockActivated(world, x, y, z, entityPlayer, side, hitVecX, hitVecY, hitVecZ);
+	}
+
+	public void sendUpdatePacket()
+	{
+		Packet packet = this.getDescriptionPacket();
+		if (packet != null)
+			PacketDispatcher.sendPacketToAllPlayers(packet);
+	}
+
 }

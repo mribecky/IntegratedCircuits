@@ -19,7 +19,10 @@
 
 package hea3ven.integratedcircuits.componentlogic;
 
+import hea3ven.integratedcircuits.TileCircuitComponentLogic;
+import hea3ven.integratedcircuits.client.StrengthDerectorModel;
 import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Direction;
 import net.minecraft.world.World;
@@ -27,6 +30,12 @@ import net.minecraft.world.World;
 public abstract class ComponentLogic {
 
 	private int direction = 0;
+	private TileCircuitComponentLogic tileEntity = null;
+
+	public ComponentLogic(TileCircuitComponentLogic tileEntity) {
+		this.tileEntity = tileEntity;
+
+	}
 
 	abstract public int getUpdateTime(World world, int x, int y, int z,
 			int neighborBlockID);
@@ -38,6 +47,16 @@ public abstract class ComponentLogic {
 	abstract public void writeToNBT(NBTTagCompound nbtTagCompound);
 
 	abstract public void readFromNBT(NBTTagCompound nbtTagCompound);
+
+	abstract public boolean isLit();
+
+	abstract public void addToDescriptionPacket(NBTTagCompound nbttagcompound);
+
+	abstract public void readFromDescriptionPacket(NBTTagCompound nbttagcompound);
+
+	public abstract String getTextureName();
+
+	public abstract StrengthDerectorModel getModel();
 
 	/**
 	 * Returns the signal strength at one input of the block. Args: world, X, Y,
@@ -54,20 +73,27 @@ public abstract class ComponentLogic {
 						world.getBlockId(inX, y, inZ) == Block.redstoneWire.blockID ? world
 								.getBlockMetadata(inX, y, inZ) : 0);
 	}
-	
-	public void setDirection(int direction)
-	{
-		this.direction  = direction; 
+
+	public void setDirection(int direction) {
+		this.direction = direction;
 	}
-	
-	protected int getInputSide()
-	{
+
+	public int getInputSide() {
 		return direction;
 	}
-	
-	protected int getOutputSide()
-	{
+
+	public int getOutputSide() {
 		return Direction.directionToFacing[direction];
+	}
+
+	public boolean onBlockActivated(World world, int x, int y, int z,
+			EntityPlayer entityPlayer, int side, float hitVecX, float hitVecY,
+			float hitVecZ) {
+		return false;
+	}
+
+	protected void sendUpdatePacket() {
+		this.tileEntity.sendUpdatePacket();
 	}
 
 }
