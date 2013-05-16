@@ -20,7 +20,8 @@
 package hea3ven.integratedcircuits.componentlogic;
 
 import hea3ven.integratedcircuits.TileCircuitComponentLogic;
-import hea3ven.integratedcircuits.client.StrengthDerectorModel;
+import hea3ven.integratedcircuits.client.model.CircuitComponentModelBase;
+import hea3ven.integratedcircuits.client.model.StrengthDerectorModel;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
@@ -114,7 +115,7 @@ public class StrengthDetectorComponentLogic extends ComponentLogic {
 	}
 
 	@Override
-	public StrengthDerectorModel getModel() {
+	public CircuitComponentModelBase getModel() {
 		return models[targetStrength - 1];
 	}
 }

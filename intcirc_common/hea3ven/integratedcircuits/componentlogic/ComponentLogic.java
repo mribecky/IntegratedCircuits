@@ -20,7 +20,7 @@
 package hea3ven.integratedcircuits.componentlogic;
 
 import hea3ven.integratedcircuits.TileCircuitComponentLogic;
-import hea3ven.integratedcircuits.client.StrengthDerectorModel;
+import hea3ven.integratedcircuits.client.model.CircuitComponentModelBase;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
@@ -56,7 +56,7 @@ public abstract class ComponentLogic {
 
 	public abstract String getTextureName();
 
-	public abstract StrengthDerectorModel getModel();
+	public abstract CircuitComponentModelBase getModel();
 
 	/**
 	 * Returns the signal strength at one input of the block. Args: world, X, Y,

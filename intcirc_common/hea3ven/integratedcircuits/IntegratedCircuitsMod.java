@@ -21,6 +21,7 @@ package hea3ven.integratedcircuits;
 
 import hea3ven.integratedcircuits.client.RenderCircuitComponent;
 import hea3ven.integratedcircuits.componentlogic.ComponentLogic;
+import hea3ven.integratedcircuits.componentlogic.NotComponentLogic;
 import hea3ven.integratedcircuits.componentlogic.StrengthDetectorComponentLogic;
 
 import java.util.HashMap;
@@ -55,7 +56,7 @@ public class IntegratedCircuitsMod {
 	public static ItemRedstoneReader redstoneReader;
 	public static ItemCircuitComponent componentItemStrengthDetector;
 
-	public static Map<Integer, Class<? extends ComponentLogic>> componentLogicsClass = new HashMap<>();
+	public static Map<Integer, ComponentLogicRegister> componentLogicsRegistry = new HashMap<>();
 
 	public static int renderCircuitComponentID;
 
@@ -80,6 +81,7 @@ public class IntegratedCircuitsMod {
 		LanguageRegistry.addName(redstoneReader, "Redstone Reader");
 
 		addComponentLogic(5001, 1, StrengthDetectorComponentLogic.class);
+		addComponentLogic(5002, 2, NotComponentLogic.class);
 
 		// renderCircuitComponentID =
 		// RenderingRegistry.getNextAvailableRenderId();
@@ -88,13 +90,10 @@ public class IntegratedCircuitsMod {
 	}
 
 	private void addComponentLogic(int itemID, int componentID,
-			Class<StrengthDetectorComponentLogic> klass) {
-		componentLogicsClass.put(componentID, klass);
-		componentItemStrengthDetector = new ItemCircuitComponent(itemID,
-				componentID);
-		GameRegistry.registerItem(componentItemStrengthDetector,
-				"circuitComponentStrengthDetector");
-		LanguageRegistry.addName(redstoneReader, "Strength Detector");
+			Class<? extends ComponentLogic> klass) {
+		ComponentLogicRegister reg = new ComponentLogicRegister(itemID, componentID, klass);
+		componentLogicsRegistry.put(componentID, reg);
+		reg.registerItem();
 
 	}
 
@@ -104,10 +103,14 @@ public class IntegratedCircuitsMod {
 
 	public static int getComponentId(
 			Class<? extends ComponentLogic> klass) {
-		for (Entry<Integer, Class<? extends ComponentLogic>> entry : componentLogicsClass.entrySet()) {
-			if(entry.getValue() == klass)
+		for (Entry<Integer, ComponentLogicRegister> entry : componentLogicsRegistry.entrySet()) {
+			if(entry.getValue().klass == klass)
 				return entry.getKey();
 		}
 		return 0;
+	}
+
+	public static ComponentLogicRegister getComponentLogicRegister(int componentID) {
+		return componentLogicsRegistry.get(componentID);
 	}
 }

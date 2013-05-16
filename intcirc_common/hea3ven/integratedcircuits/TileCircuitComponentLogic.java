@@ -22,7 +22,6 @@ package hea3ven.integratedcircuits;
 import hea3ven.integratedcircuits.componentlogic.ComponentLogic;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map.Entry;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
@@ -79,12 +78,7 @@ public class TileCircuitComponentLogic extends TileEntity {
 	}
 
 	private int getComponentID() {
-		for (Entry<Integer, Class<? extends ComponentLogic>> entry : IntegratedCircuitsMod.componentLogicsClass
-				.entrySet()) {
-			if (entry.getValue().isInstance(logic))
-				return entry.getKey();
-		}
-		return 0;
+		return IntegratedCircuitsMod.getComponentId(logic.getClass());
 	}
 
 	@Override
@@ -92,8 +86,11 @@ public class TileCircuitComponentLogic extends TileEntity {
 		super.readFromNBT(nbtTagCompound);
 
 		try {
-			logic = IntegratedCircuitsMod.componentLogicsClass.get(
-					nbtTagCompound.getInteger("componentID")).getDeclaredConstructor(TileCircuitComponentLogic.class).newInstance(this);
+			logic = IntegratedCircuitsMod
+					.getComponentLogicRegister(nbtTagCompound
+							.getInteger("componentID")).klass
+					.getDeclaredConstructor(TileCircuitComponentLogic.class)
+					.newInstance(this);
 
 		} catch (InstantiationException e) {
 			// TODO Auto-generated catch block
@@ -146,7 +143,7 @@ public class TileCircuitComponentLogic extends TileEntity {
 	private void addToDescriptionPacket(NBTTagCompound nbttagcompound) {
 		this.logic.addToDescriptionPacket(nbttagcompound);
 	}
-	
+
 	private void readFromDescriptionPacket(NBTTagCompound nbttagcompound) {
 		this.logic.readFromDescriptionPacket(nbttagcompound);
 	}
@@ -154,11 +151,11 @@ public class TileCircuitComponentLogic extends TileEntity {
 	public boolean onBlockActivated(World world, int x, int y, int z,
 			EntityPlayer entityPlayer, int side, float hitVecX, float hitVecY,
 			float hitVecZ) {
-		return this.logic.onBlockActivated(world, x, y, z, entityPlayer, side, hitVecX, hitVecY, hitVecZ);
+		return this.logic.onBlockActivated(world, x, y, z, entityPlayer, side,
+				hitVecX, hitVecY, hitVecZ);
 	}
 
-	public void sendUpdatePacket()
-	{
+	public void sendUpdatePacket() {
 		Packet packet = this.getDescriptionPacket();
 		if (packet != null)
 			PacketDispatcher.sendPacketToAllPlayers(packet);

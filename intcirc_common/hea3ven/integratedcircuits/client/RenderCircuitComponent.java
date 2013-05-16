@@ -22,21 +22,22 @@ public class RenderCircuitComponent extends TileEntitySpecialRenderer {
 			double par4, double par6, float f) {
 
 		ComponentLogic logic = par1TileEntitySign.getLogic();
+		if (logic != null) {
+			GL11.glPushMatrix();
+			GL11.glTranslatef((float) par2 + 0.5F, (float) par4,
+					(float) par6 + 0.5F);
+			float angle = (float) (par1TileEntitySign.getDirection() * 360) / 4.0F;
+			GL11.glRotatef(-angle, 0.0F, 1.0F, 0.0F);
 
-		GL11.glPushMatrix();
-		GL11.glTranslatef((float) par2 + 0.5F, (float) par4,
-				(float) par6 + 0.5F);
-		float angle = (float) (par1TileEntitySign.getDirection() * 360) / 4.0F;
-		GL11.glRotatef(-angle, 0.0F, 1.0F, 0.0F);
+			this.bindTextureByName(logic.getTextureName());
+			GL11.glPushMatrix();
+			GL11.glScalef(0.5f, -0.5f, -0.5f);
 
-		this.bindTextureByName(logic.getTextureName());
-		GL11.glPushMatrix();
-		GL11.glScalef(0.5f, -0.5f, -0.5f);
-		// this.modelSign.signStick.showModel = false;
-		// this.modelSign.renderSign();
-		logic.getModel().render(0.0625F);
-		GL11.glPopMatrix();
-		GL11.glPopMatrix();
+			logic.getModel().render(0.0625F);
+
+			GL11.glPopMatrix();
+			GL11.glPopMatrix();
+		}
 	}
 
 }

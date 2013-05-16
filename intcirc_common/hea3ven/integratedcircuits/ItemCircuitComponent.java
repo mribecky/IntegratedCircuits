@@ -90,7 +90,7 @@ public class ItemCircuitComponent extends Item {
 				TileCircuitComponentLogic tile = (TileCircuitComponentLogic) world
 						.getBlockTileEntity(x, y, z);
 				try {
-					tile.setLogic(IntegratedCircuitsMod.componentLogicsClass.get(this.componentID).getDeclaredConstructor(TileCircuitComponentLogic.class).newInstance(this));
+					tile.setLogic(IntegratedCircuitsMod.getComponentLogicRegister(this.componentID).klass.getDeclaredConstructor(TileCircuitComponentLogic.class).newInstance(tile));
 				} catch (InstantiationException e) {
 					e.printStackTrace();
 					world.setBlockToAir(x, y, z);
